@@ -9,13 +9,12 @@ private:
     static int totalAccounts;
     int initialSetup();
     void printChoices();
-    void showBalance();
-    void createBankAccount();
     int generateAccountNo();
+    void showBalance();
     void depositAmount();
-    void pushDetailsToRespectiveFiles(int, int, std::string &);
     void withdrawAmount();
     void showFullDetails();
+    void createBankAccount();
 
 public:
     bank()
@@ -73,35 +72,6 @@ void bank::systemRunner()
     }
 }
 
-void bank::createBankAccount()
-{
-    // The given function is reponsible for creating a bank account
-    int accountNo;
-    std::string holderName;
-    int deposit = 0;
-    int choice = 0;
-
-    std::cout << "Do you want to deposit initially(1 or 0)? ";
-    std::cin >> choice;
-
-    if (choice == 1)
-    {
-        std::cout << "Enter the deposit amount: ";
-        std::cin >> deposit;
-    }
-
-    // Generate an account no.
-    accountNo = generateAccountNo();
-    std::cout << "Account no generated" << std::endl;
-    std::cout << "The account no. is " << accountNo << std::endl;
-
-    // Pass all details to function so that a record can be maintained
-    pushDetailsToRespectiveFiles(accountNo, deposit, holderName);
-
-    std::cout << "Account created" << std::endl
-              << std::endl;
-}
-
 int bank::generateAccountNo()
 {
     // Generate an account no. using given function
@@ -119,24 +89,6 @@ int bank::generateAccountNo()
     return totAccounts;
 }
 
-void bank::pushDetailsToRespectiveFiles(int acNo, int depo, std::string &holderName)
-{
-    std::ofstream acNosFile("accountNos.txt", std::ios::app);       // Create an account no file object
-    std::ofstream balanceFile("balances.txt", std::ios::app);       // Create a balance file object
-    std::ofstream holderNameFile("holderNames.txt", std::ios::app); // Create an account holder name file object
-
-    std::cout << "Enter your name(Seperate first name, middle name and last name with an underscore): ";
-    std::cin >> holderName;
-
-    acNosFile << acNo << " ";
-    balanceFile << depo << " ";
-    holderNameFile << holderName << " ";
-
-    acNosFile.close();
-    balanceFile.close();
-    holderNameFile.close();
-}
-
 void bank::printChoices()
 {
     std::cout << "Our services: " << std::endl;
@@ -150,220 +102,237 @@ void bank::printChoices()
 
 void bank::showBalance()
 {
-    // This function is responsible for displaying the balance in account if user enters correct account no.
-    std::ifstream accountNoFile("accountNos.txt");
+    // The details of user are account no., holder name, balance available;
+    int accountNo, balance;
     int accountNoTemp;
+    std::string temp;
+    int i = 0, j = 0;
     int srNo = 0;
-    int i = 0;
-    int accountNo;
-    int balance;
     bool isAcNoValid = false;
 
-    std::cout << "Enter your account no: ";
+    std::ifstream allDetailsFile("allDetails.txt");
+    std::cout << "Enter the account no.: ";
     std::cin >> accountNo;
 
-    while (accountNoFile.eof() == 0)
+    while (allDetailsFile.eof() == 0)
     {
-        // Open accounts file and check whether the entered account no exists or not
-        accountNoFile >> accountNoTemp;
-        if (accountNoTemp == accountNo)
+        allDetailsFile >> accountNoTemp;
+        if (accountNo == accountNoTemp)
         {
-            // If account no is found, break out of the loop
             isAcNoValid = true;
             srNo++;
             break;
         }
-        srNo++;
-    }
-    accountNoFile.close(); // Close accounts file
-    if (isAcNoValid == true)
-    {
-        // If account no. is found, open balance file
-        std::ifstream balanceFile("balances.txt");
-        while (i < srNo)
+        while (i < 2)
         {
-            // Keep inputting balances until users balance is not found.
-            balanceFile >> balance;
+            allDetailsFile >> temp;
             i++;
         }
-        // Output balance
-        std::cout << "The balance in your account is Rs. " << balance << std::endl
-                  << std::endl;
-        balanceFile.close();
+
+        if (i == 2)
+        {
+            i = 0;
+        }
+        srNo++;
     }
-    else if (isAcNoValid == false)
+    allDetailsFile.close();
+    if (isAcNoValid == false)
     {
-        // Return to the calling function if account not found.
-        std::cout << "Account no entered not found." << std::endl
-                  << std::endl;
+        std::cout << "Account no. entered is invalid" << std::endl;
         return;
+    }
+    else if (isAcNoValid == true)
+    {
+        i = 0;
+        std::ifstream allDetailsFileAgain("allDetails.txt");
+
+        while (i < srNo)
+        {
+            allDetailsFileAgain >> temp;
+            allDetailsFileAgain >> temp;
+            allDetailsFileAgain >> balance;
+            i++;
+        }
+        std::cout << "Your balance is " << balance << std::endl;
     }
 }
 
 void bank::depositAmount()
 {
-    // The below function is responsible for depositing amount to specified account no.
-    int accountNo, amountDeposit, accountNoBuffer, srNo = 0, i = 0;
+    std::vector<int> accountNosToBeWritten;
+    std::vector<std::string> accountHolderNamesToBeWritten;
+    std::vector<int> balanceArrayToBeWritten;
+    int accountNoTemp;
+    int accountNo;
+    int i = 0;
     bool isAcNoValid = false;
-    int balanceBuffer;
-    std::vector<int> balanceArray; // Vector responsible for holding data to write it again to balance file
+    int srNo = 0;
+    std::string tempString;
+    int tempInt;
+    int depositAmount;
+    std::ifstream allDetailsFile("allDetails.txt");
 
-    // Open account file to check whether account no. user will enter exists or not.
-    std::ifstream accountNoFile("accountNos.txt");
-
-    std::cout << "Enter your account no.: ";
+    std::cout << "Enter account no.: ";
     std::cin >> accountNo;
 
-    while (accountNoFile.eof() == 0)
+    while (allDetailsFile.eof() == 0)
     {
-        // Keep entering account no. until users account no. is not found
-        accountNoFile >> accountNoBuffer;
-        if (accountNo == accountNoBuffer)
+        allDetailsFile >> accountNoTemp;
+        if (accountNo == accountNoTemp)
         {
-            // As soon as account no. is found, break out of this loop
             isAcNoValid = true;
             srNo++;
             break;
         }
+        while (i < 2)
+        {
+            allDetailsFile >> tempString;
+            i++;
+        }
+
+        if (i == 2)
+        {
+            i = 0;
+        }
         srNo++;
     }
-    accountNoFile.close();
+    allDetailsFile.close();
     if (isAcNoValid == false)
     {
-        // Return to the calling function in case entered account no is invalid
-        std::cout << "Account no. not found" << std::endl
-                  << std::endl;
+        std::cout << "Account no. entered is invalid" << std::endl;
         return;
     }
     else if (isAcNoValid == true)
     {
-        // If entered account no is found, open balance file
-        std::ifstream balanceFile("balances.txt");
+        i = 0;
+        std::ifstream allDetailsFileAgain("allDetails.txt");
 
         while (i < totalAccounts)
         {
-            // Keep entering balances until total no of account not reached
-            balanceFile >> balanceBuffer;
-            balanceArray.push_back(balanceBuffer);
+            allDetailsFileAgain >> tempInt;
+            accountNosToBeWritten.push_back(tempInt);
+            allDetailsFileAgain >> tempString;
+            accountHolderNamesToBeWritten.push_back(tempString);
+            allDetailsFileAgain >> tempInt;
+            balanceArrayToBeWritten.push_back(tempInt);
             i++;
         }
+
         std::cout << "Enter the amount you want to deposit: ";
-        std::cin >> amountDeposit;
+        std::cin >> depositAmount;
+        balanceArrayToBeWritten[srNo - 1] += depositAmount;
 
-        // balanceArray[srNo-1] represents balance of user who wants to deposit
-        balanceArray[srNo - 1] = balanceArray[srNo - 1] + amountDeposit; // Modify the balance of user
-        balanceFile.close();
+        allDetailsFileAgain.close();
 
-        // Clear the balance file to write to it
-        std::ofstream clearBalanceFile("balances.txt");
-        clearBalanceFile.close();
-
-        // Again open balance file in append mode
-        std::ofstream balanceFileAgain("balances.txt", std::ios::app);
+        std::ofstream allDetailsFileOnceAgain("allDetails.txt");
         i = 0;
         while (i < totalAccounts)
         {
-            // Write the data to balance file
-            balanceFileAgain << balanceArray[i] << " ";
+            allDetailsFileOnceAgain << accountNosToBeWritten[i] << " " << accountHolderNamesToBeWritten[i] << " " << balanceArrayToBeWritten[i] << "\n";
             i++;
         }
-        std::cout << std::endl;
-        balanceFileAgain.close();
+        allDetailsFileOnceAgain.close();
     }
 }
 
 void bank::withdrawAmount()
 {
-    // The below function is responsible for depositing amount to specified account no.
-    int accountNo, amountToWithdraw, accountNoBuffer, srNo = 0, i = 0;
+    std::vector<int> accountNosToBeWritten;
+    std::vector<std::string> accountHolderNamesToBeWritten;
+    std::vector<int> balanceArrayToBeWritten;
+    int accountNoTemp;
+    int accountNo;
+    int i = 0;
     bool isAcNoValid = false;
-    bool isSufficientAmountAvailable = false;
-    int balanceBuffer;
-    std::vector<int> balanceArray; // Vector responsible for holding data to write it again to balance file
+    int srNo = 0;
+    std::string tempString;
+    int tempInt;
+    int depositAmount;
+    std::ifstream allDetailsFile("allDetails.txt");
 
-    // Open account file to check whether account no. user will enter exists or not.
-    std::ifstream accountNoFile("accountNos.txt");
-
-    std::cout << "Enter your account no.: ";
+    std::cout << "Enter account no.: ";
     std::cin >> accountNo;
 
-    while (accountNoFile.eof() == 0)
+    while (allDetailsFile.eof() == 0)
     {
-        // Keep entering account no. until users account no. is not found
-        accountNoFile >> accountNoBuffer;
-        if (accountNo == accountNoBuffer)
+        allDetailsFile >> accountNoTemp;
+        if (accountNo == accountNoTemp)
         {
-            // As soon as account no. is found, break out of this loop
             isAcNoValid = true;
             srNo++;
             break;
         }
+        while (i < 2)
+        {
+            allDetailsFile >> tempString;
+            i++;
+        }
+
+        if (i == 2)
+        {
+            i = 0;
+        }
         srNo++;
     }
-    accountNoFile.close();
+    allDetailsFile.close();
     if (isAcNoValid == false)
     {
-        // Return to the calling function in case entered account no is invalid
-        std::cout << "Account no. not found" << std::endl
-                  << std::endl;
+        std::cout << "Account no. entered is invalid" << std::endl;
         return;
     }
     else if (isAcNoValid == true)
     {
-        // If entered account no is found, open balance file
-        std::ifstream balanceFile("balances.txt");
+        i = 0;
+        std::ifstream allDetailsFileAgain("allDetails.txt");
 
         while (i < totalAccounts)
         {
-            // Keep entering balances until total no of account not reached
-            balanceFile >> balanceBuffer;
-            balanceArray.push_back(balanceBuffer);
+            allDetailsFileAgain >> tempInt;
+            accountNosToBeWritten.push_back(tempInt);
+            allDetailsFileAgain >> tempString;
+            accountHolderNamesToBeWritten.push_back(tempString);
+            allDetailsFileAgain >> tempInt;
+            balanceArrayToBeWritten.push_back(tempInt);
             i++;
         }
-        std::cout << "Amount of balance available in your account is Rs. " << balanceArray[srNo - 1] << std::endl;
+
+        std::cout << "The balance in your account is: " << balanceArrayToBeWritten[srNo - 1] << std::endl;
+
         std::cout << "Enter the amount you want to withdraw: ";
-        std::cin >> amountToWithdraw;
+        std::cin >> depositAmount;
 
-        if ((balanceArray[srNo - 1] - amountToWithdraw) >= 0)
+        if (balanceArrayToBeWritten[srNo - 1] - depositAmount >= 0)
         {
-            isSufficientAmountAvailable = true;
+            balanceArrayToBeWritten[srNo - 1] -= depositAmount;
+        }
+        else
+        {
+            std::cout << "Insufficient balance." << std::endl;
         }
 
-        // balanceArray[srNo-1] represents balance of user who wants to withdraw
-        if (isSufficientAmountAvailable == true)
-        {
-            balanceArray[srNo - 1] = balanceArray[srNo - 1] - amountToWithdraw; // Modify the balance of user
-        }
-        else if (isSufficientAmountAvailable == false)
-        {
-            balanceFile.close();
-            std::cout << "Sufficient balance not available." << std::endl
-                      << std::endl;
-        }
+        allDetailsFileAgain.close();
 
-        // Clear the balance file to write to it
-        std::ofstream clearBalanceFile("balances.txt");
-        clearBalanceFile.close();
+        std::ofstream clearAllDetailsFile("allDetails.txt");
+        clearAllDetailsFile.close();
 
-        // Again open balance file in append mode
-        std::ofstream balanceFileAgain("balances.txt", std::ios::app);
+        std::ofstream allDetailsFileOnceAgain("allDetails.txt", std::ios::app);
         i = 0;
         while (i < totalAccounts)
         {
-            // Write the data to balance file
-            balanceFileAgain << balanceArray[i] << " ";
+            allDetailsFileOnceAgain << accountNosToBeWritten[i] << " " << accountHolderNamesToBeWritten[i] << " " << balanceArrayToBeWritten[i] << "\n";
             i++;
         }
-        std::cout << std::endl;
-        balanceFileAgain.close();
+        allDetailsFileOnceAgain.close();
     }
 }
 
 void bank::showFullDetails()
 {
-    int accountNo, accountNoBuffer, srNo = 0, i = 0, balance;
-    std::ifstream accountNoFile("accountNos.txt");
+    int accountNo, accountNoBuffer, srNo = 0, i = 0;
+    std::ifstream accountNoFile("allDetails.txt");
     bool isAcNoValid = false;
+    int balance;
+    std::string temp;
     std::string holderName;
 
     std::cout << "Enter your account no.: ";
@@ -378,6 +347,9 @@ void bank::showFullDetails()
             isAcNoValid = true;
             break;
         }
+
+        accountNoFile >> temp;
+        accountNoFile >> temp;
         srNo++;
     }
     accountNoFile.close(); // Close accounts file
@@ -390,40 +362,48 @@ void bank::showFullDetails()
     }
     else if (isAcNoValid == true)
     {
-        // If account no. is found, open balance file
-        std::ifstream balanceFile("balances.txt");
-        std::ifstream accountNoFileAgain("accountNos.txt");
-        std::ifstream holderNameFile("holderNames.txt");
-
+        std::ifstream allDetailsFileAgain("allDetails.txt");
         while (i < srNo)
         {
-            // Keep inputting balances until users balance is not found.
-            balanceFile >> balance;
+            allDetailsFileAgain >> accountNo;
+            allDetailsFileAgain >> holderName;
+            allDetailsFileAgain >> balance;
             i++;
         }
-        i = 0;
-        while (i < srNo)
-        {
-            // Keep inputting account no. until users account is found.
-            accountNoFileAgain >> accountNo;
-            i++;
-        }
-        i = 0;
-        while (i < srNo)
-        {
-            // Keep inputting holder names until account is found.
-            holderNameFile >> holderName;
-            i++;
-        }
-
-        std::cout << "Your name is: " << holderName << std::endl;
-        std::cout << "Your account no. is: " << accountNo << std::endl;
-        std::cout << "The balance in your account is Rs. " << balance << std::endl
+        std::cout << "Your account no. is " << accountNo << std::endl;
+        std::cout << "Your name is " << holderName << std::endl;
+        std::cout << "Your balance is " << balance << std::endl
                   << std::endl;
-        balanceFile.close();
-        accountNoFileAgain.close();
-        holderNameFile.close();
     }
+}
+
+void bank::createBankAccount()
+{
+    int depositAmount = 0;
+    bool choice = false;
+    int accountNo;
+    std::string holderName;
+    std::ofstream allDetailsFile("allDetails.txt", std::ios::app);
+
+    std::cout << "Do you want to deposit initially?(1 or 0): ";
+    std::cin >> choice;
+
+    if (choice == false)
+    {
+        depositAmount = 0;
+    }
+    else if (choice == true)
+    {
+        std::cout << "Enter the deposit amount: ";
+        std::cin >> depositAmount;
+    }
+    std::cout << "Enter your name(Enter first name, middle name and last name seperated with underscore): ";
+    std::cin >> holderName;
+
+    accountNo = generateAccountNo();
+
+    allDetailsFile << accountNo << " " << holderName << " " << depositAmount << "\n";
+    allDetailsFile.close();
 }
 
 int main()
