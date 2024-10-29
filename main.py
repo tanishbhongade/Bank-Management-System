@@ -31,7 +31,7 @@ class Bank:
         df = pd.read_csv("data.csv")
         name = input("Enter your name: ")
         balance = float(input("Enter your initial balance: "))
-        password = input("Enter your password: ")
+        password = getpass.getpass("Enter your password: ")
         password_bytes = password.encode('utf-8')
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(password_bytes, salt)
@@ -65,7 +65,7 @@ class Bank:
 
         customer_index = df[df["account_no"] == account_no].index[0]
         new_name = input("Enter new name: ")
-        new_password = input("Enter new password: ")
+        new_password = getpass.getpass("Enter new password: ")
 
         new_password_bytes = new_password.encode("utf-8")
         salt = bcrypt.gensalt()
@@ -126,11 +126,12 @@ class Bank:
             print("4. Deposit")
             print("5. Logout")
 
-            operation = input("What would you like to do?")
+            operation = input("What would you like to do? ")
             if operation == "1":
                 self._update_existing_account(account_no)
             elif operation == "2":
                 self._delete_account(account_no)
+                return
             elif operation == "3":
                 self._withdrawal(account_no)
             elif operation == "4":
@@ -153,7 +154,7 @@ class Bank:
     @staticmethod
     def login_existing_customer():
         account_no = int(input("Enter your account number: "))
-        password = input("Enter your password: ")
+        password = getpass.getpass("Enter your password: ")
 
         df = pd.read_csv("data.csv")
         if account_no not in df["account_no"].values or (
